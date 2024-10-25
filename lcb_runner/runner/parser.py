@@ -42,6 +42,13 @@ def get_args():
         help="whether to use full set of tests (slower and more memory intensive evaluation)",
     )
     parser.add_argument(
+        "--difficulties",
+        nargs="+",
+        choices=["easy", "medium", "hard"],
+        default=["easy", "medium", "hard"],
+        help="Specify one or more difficulty levels (easy, medium, hard)"
+    )
+    parser.add_argument(
         "--cot_code_execution",
         action="store_true",
         help="whether to use CoT in code execution scenario",

@@ -111,6 +111,7 @@ def run_test(sample, test=None, debug=False, timeout=6):
         return in_outs, {"error": "no test code provided"}
     elif test is not None:
         results = []
+        feedback = []
         sol = "from string import *\nfrom re import *\nfrom datetime import *\nfrom collections import *\nfrom heapq import *\nfrom bisect import *\nfrom copy import *\nfrom math import *\nfrom random import *\nfrom statistics import *\nfrom itertools import *\nfrom functools import *\nfrom operator import *\nfrom io import *\nfrom sys import *\nfrom json import *\nfrom builtins import *\nfrom typing import *\nimport string\nimport re\nimport datetime\nimport collections\nimport heapq\nimport bisect\nimport copy\nimport math\nimport random\nimport statistics\nimport itertools\nimport functools\nimport operator\nimport io\nimport sys\nimport json\nsys.setrecursionlimit(6*10**5)\n"
         if debug:
             print(f"loading test code = {datetime.now().time()}")
@@ -133,11 +134,11 @@ def run_test(sample, test=None, debug=False, timeout=6):
                 if debug:
                     print(f"type 0 compilation error = {e}")
                 results.append(-2)
-                return results, {
+                return results, [{
                     "error": repr(e),
                     "error_code": -1,
                     "error_message": "Compilation Error",
-                }
+                }]
             signal.alarm(0)
 
         elif which_type == CODE_TYPE.standard_input:
@@ -195,11 +196,11 @@ def run_test(sample, test=None, debug=False, timeout=6):
                 if debug:
                     print(f"type 1 compilation error = {e}")
                 results.append(-2)
-                return results, {
+                return results, [{
                     "error": repr(e),
                     "error_code": -1,
                     "error_message": "Compilation Error",
-                }
+                }]
             signal.alarm(0)
         if debug:
             print(f"get method = {datetime.now().time()}")
@@ -211,11 +212,11 @@ def run_test(sample, test=None, debug=False, timeout=6):
             e = sys.exc_info()
             print(f"unable to get function error = {e}")
             results.append(-2)
-            return results, {
+            return results, [{
                 "error": repr(e),
                 "error_code": -1,
                 "error_message": "Unable to extract code",
-            }
+            }]
 
         for index, inputs in enumerate(in_outs["inputs"]):
             raw_inputs = inputs
@@ -294,13 +295,23 @@ def run_test(sample, test=None, debug=False, timeout=6):
                         True
                     results.append(tmp_result)
                     if tmp_result != True:
-                        return results, {
+                        feedback.append({
                             "output": raw_true_output_copy,
                             "expected": raw_outputs,
                             "inputs": raw_inputs,
                             "error_code": -2,
                             "error_message": "Wrong Answer",
-                        }
+                        })
+                        continue
+                    else:
+                        feedback.append({})
+                        # return results, {
+                        #     "output": raw_true_output_copy,
+                        #     "expected": raw_outputs,
+                        #     "inputs": raw_inputs,
+                        #     "error_code": -2,
+                        #     "error_message": "Wrong Answer",
+                        # }
                     # reset the alarm
                     signal.alarm(0)
                 except Exception as e:
@@ -312,21 +323,37 @@ def run_test(sample, test=None, debug=False, timeout=6):
                         )
                     results.append(-1)
                     if "timeoutexception" in repr(e).lower():
-                        return results, {
+                        feedback.append({
                             "error": repr(e),
                             "error_code": -3,
                             "error_message": "Time Limit Exceeded",
                             "inputs": raw_inputs,
                             "expected": raw_outputs,
-                        }
+                        })
+                        continue
+                        # return results, {
+                        #     "error": repr(e),
+                        #     "error_code": -3,
+                        #     "error_message": "Time Limit Exceeded",
+                        #     "inputs": raw_inputs,
+                        #     "expected": raw_outputs,
+                        # }
                     else:
-                        return results, {
+                        feedback.append({
                             "error": repr(e),
                             "error_code": -4,
                             "error_message": "Runtime Error",
                             "inputs": raw_inputs,
                             "expected": raw_outputs,
-                        }
+                        })
+                        # return results, {
+                        #     "error": repr(e),
+                        #     "error_code": -4,
+                        #     "error_message": "Runtime Error",
+                        #     "inputs": raw_inputs,
+                        #     "expected": raw_outputs,
+                        # }
+                        continue
                 faulthandler.disable()
                 signal.alarm(0)
                 if debug:
@@ -357,21 +384,37 @@ def run_test(sample, test=None, debug=False, timeout=6):
                         )
                         results.append(-1)
                         if "timeoutexception" in repr(e).lower():
-                            return results, {
+                            feedback.append({
                                 "error": repr(e),
                                 "error_code": -3,
                                 "error_message": "Time Limit Exceeded",
                                 "inputs": raw_inputs,
                                 "expected": raw_outputs,
-                            }
+                            })
+                            continue
+                            # return results, {
+                            #     "error": repr(e),
+                            #     "error_code": -3,
+                            #     "error_message": "Time Limit Exceeded",
+                            #     "inputs": raw_inputs,
+                            #     "expected": raw_outputs,
+                            # }
                         else:
-                            return results, {
+                            feedback.append({
                                 "error": repr(e),
                                 "error_code": -4,
                                 "error_message": "Runtime Error",
                                 "inputs": raw_inputs,
                                 "expected": raw_outputs,
-                            }
+                            })
+                            continue
+                            # return results, {
+                            #     "error": repr(e),
+                            #     "error_code": -4,
+                            #     "error_message": "Runtime Error",
+                            #     "inputs": raw_inputs,
+                            #     "expected": raw_outputs,
+                            # }
                     signal.alarm(0)
                 raw_true_output = output[0]
                 raw_true_output_copy = truncatefn(raw_true_output, 200)
@@ -397,6 +440,7 @@ def run_test(sample, test=None, debug=False, timeout=6):
                 if custom_compare_(output, in_outs["outputs"][index]):
                     tmp_result = True
                     results.append(tmp_result)
+                    feedback.append({})
                     continue
 
                 # ground truth sequences are expressed as lists not tuples
@@ -419,6 +463,7 @@ def run_test(sample, test=None, debug=False, timeout=6):
 
                 if tmp_result == True:
                     results.append(tmp_result)
+                    feedback.append({})
                     continue
 
                 # try one more time without \n
@@ -448,6 +493,7 @@ def run_test(sample, test=None, debug=False, timeout=6):
 
                 if tmp_result == True:
                     results.append(tmp_result)
+                    feedback.append({})
                     continue
 
                 # try by converting the output into a split up list too
@@ -467,6 +513,7 @@ def run_test(sample, test=None, debug=False, timeout=6):
 
                 if tmp_result == True:
                     results.append(tmp_result)
+                    feedback.append({})
                     continue
 
                 if debug:
@@ -527,6 +574,7 @@ def run_test(sample, test=None, debug=False, timeout=6):
 
                 if tmp_result == True:
                     results.append(tmp_result)
+                    feedback.append({})
                     continue
 
                 if debug:
@@ -550,6 +598,7 @@ def run_test(sample, test=None, debug=False, timeout=6):
 
                 if tmp_result == True:
                     results.append(tmp_result)
+                    feedback.append({})
                     continue
 
                 if debug:
@@ -602,13 +651,21 @@ def run_test(sample, test=None, debug=False, timeout=6):
 
                 results.append(tmp_result)
                 if tmp_result != True:
-                    return results, {
+                    feedback.append({
                         "output": raw_true_output_copy,
                         "expected": raw_outputs,
                         "inputs": raw_inputs,
                         "error_code": -2,
                         "error_message": "Wrong Answer",
-                    }
+                    })
+                    continue
+                    # return results, {
+                    #     "output": raw_true_output_copy,
+                    #     "expected": raw_outputs,
+                    #     "inputs": raw_inputs,
+                    #     "error_code": -2,
+                    #     "error_message": "Wrong Answer",
+                    # }
 
                 if debug:
                     nl = "\n"
@@ -623,7 +680,7 @@ def run_test(sample, test=None, debug=False, timeout=6):
 
                     print(f"results = {results}")
 
-    return results, {}
+    return results, feedback
 
 
 def custom_compare_(output, ground_truth):

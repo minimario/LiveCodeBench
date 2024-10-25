@@ -58,6 +58,7 @@ def evaluate_generations_by_problem(args):
 
     res = []
     metadata = []
+    n_testcases = len(json.loads(sample["input_output"])["inputs"])
     for o_idx, o in enumerate(problem_generations):
         curr_res = [-2]
         try:
@@ -74,6 +75,9 @@ def evaluate_generations_by_problem(args):
                     e = bool(e)
                 fixed.append(e)
             curr_res = fixed
+            assert len(curr_res) == len(curr_metadata)
+            assert len(curr_res) == n_testcases or len(curr_res) == 1
+            # print(curr_metadata)
             if not np.all(curr_res):
                 if debug:
                     print(f"Results were not True for all test cases {curr_res=}\n")
@@ -81,14 +85,14 @@ def evaluate_generations_by_problem(args):
             if debug:
                 print(f"Compilation failed, test framework exception = {repr(e)}{e}\n")
             # break
-            curr_metadata = {
+            curr_metadata = [{
                 "error": repr(e),
                 "error_code": -5,
                 "error_message": "TestRunnerError",
-            }
+            }]
         finally:
             assert isinstance(curr_res, list)
-            assert isinstance(curr_metadata, dict)
+            # assert isinstance(curr_metadata, dict)
             res.append(curr_res)
             metadata.append(curr_metadata)
     if debug:
@@ -99,6 +103,14 @@ def evaluate_generations_by_problem(args):
             print("Result\n")
             print(res[i])
             print("*" * 30 + "\n\n")
+    # for i, r in enumerate(problem_generations):
+    #     # print("Sample\n")
+    #     # print(r)
+    #     # print("\n")
+    #     print("Result\n")
+    #     print(res[i])
+    #     print(len(res[i]), len(metadata[i]))
+    #     print("*" * 30 + "\n\n")
     return res, metadata
 
 
